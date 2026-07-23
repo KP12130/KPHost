@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- 🛡️ Cloudflare Turnstile Real CAPTCHA API -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <style>
     :root {
       --bg-dark: #05070a;
@@ -653,10 +655,10 @@
             <input type="text" id="envVarsInput" class="input-field" placeholder='{"DISCORD_TOKEN": "YOUR_BOT_TOKEN"}'>
           </div>
 
-          <!-- 🛡️ CAPTCHA Human Verification Shield -->
-          <div style="background: rgba(34, 197, 94, 0.05); border: 1px solid var(--lime-border); padding: 16px; border-radius: 14px;">
-            <label style="font-weight:800; font-size:0.9rem; color:var(--lime); display:block; margin-bottom:8px;" id="captchaLabel">🛡️ CAPTCHA Verification: Solve 8 + 5 = ?</label>
-            <input type="number" id="captchaInput" class="input-field" placeholder="Enter number answer" required>
+          <!-- 🛡️ Real Cloudflare Turnstile CAPTCHA Widget API -->
+          <div style="background: rgba(34, 197, 94, 0.05); border: 1px solid var(--lime-border); padding: 16px; border-radius: 14px; display:flex; flex-direction:column; align-items:center; gap:10px;">
+            <label style="font-weight:800; font-size:0.9rem; color:var(--lime); display:block;">🛡️ Cloudflare Turnstile CAPTCHA Verification</label>
+            <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-theme="dark"></div>
           </div>
         </div>
 
