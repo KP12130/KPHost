@@ -339,7 +339,7 @@
       border: 1px solid #1e293b;
     }
 
-    /* Upload Modal Tabs */
+    /* Modal Styling */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -429,7 +429,7 @@
 
     <!-- Logged Out State -->
     <div id="headerLoggedOut">
-      <button class="btn" onclick="loginUser('GitHub', 'https://github.com/github.png')">🐙 Get Started</button>
+      <button class="btn" onclick="loginUser('GitHub', 'https://github.com/github.png')">🐙 Sign In</button>
     </div>
 
     <!-- Logged In Profile State -->
@@ -443,6 +443,7 @@
       <div class="profile-dropdown" id="profileDropdown">
         <div style="font-size:0.85rem; color:var(--text-dim);">Logged in as <b id="userEmail" style="color:#fff;">dev@kphost.io</b></div>
         <div class="balance-badge" style="text-align:center;">💰 Credit Balance: $<span id="userBalance">10.00</span></div>
+        <button class="btn btn-secondary" style="width:100%; font-size:0.85rem;" onclick="addCredits()">+ Add $5.00 Credits</button>
         <div style="font-size:0.8rem; color:var(--lime-main); text-align:center;">⭐ Level 1 Developer</div>
         <hr style="border-color:var(--border-dark);">
         <button class="btn btn-secondary" style="width:100%;" onclick="logoutUser()">🚪 Sign Out</button>
@@ -631,6 +632,20 @@
       if (!currentUser) logoutUser();
     }
 
+    async function addCredits() {
+      const res = await fetch('/api/users/add-credits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: 5.00 })
+      });
+      const data = await res.json();
+      if (data.success) {
+        currentUser.walletBalance = data.balance;
+        document.getElementById('userBalance').innerText = data.balance.toFixed(2);
+        alert('🎉 Added $5.00 credits to your wallet! New Balance: $' + data.balance.toFixed(2));
+      }
+    }
+
     async function loadBots() {
       const res = await fetch('/api/bots');
       const data = await res.json();
@@ -669,6 +684,7 @@
               : `<button class="btn" style="flex:1;" onclick="startBot('${bot.botId}')">⚡ Start</button>`
             }
             <button class="btn btn-secondary" onclick="fetchLogs('${bot.botId}')">📜 Logs</button>
+            <button class="btn btn-danger" style="padding:8px 12px;" onclick="deleteBot('${bot.botId}')">🗑️</button>
           </div>
         </div>
       `).join('');
@@ -745,6 +761,13 @@
     async function stopBot(botId) {
       await fetch(`/api/bots/${botId}/stop`, { method: 'POST' });
       loadBots();
+    }
+
+    async function deleteBot(botId) {
+      if (confirm('Are you sure you want to delete this bot?')) {
+        await fetch(`/api/bots/${botId}`, { method: 'DELETE' });
+        loadBots();
+      }
     }
 
     async function fetchLogs(botId) {

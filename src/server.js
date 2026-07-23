@@ -201,6 +201,35 @@ app.post('/api/bots/:botId/stop', async (req, res) => {
   }
 });
 
+// 5. Delete Bot API
+app.delete('/api/bots/:botId', async (req, res) => {
+  const { botId } = req.params;
+  try {
+    stopBotProcess(botId);
+    await Bot.deleteOne({ botId });
+    res.json({ success: true, message: 'Bot deleted successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 6. Add Credits / Top Up Wallet API
+app.post('/api/users/add-credits', async (req, res) => {
+  const { amount } = req.body;
+  const creditAmount = parseFloat(amount) || 5.00;
+  try {
+    let user = await User.findOne();
+    if (!user) {
+      user = await User.create({ username: 'KP Developer', email: 'dev@kphost.io', walletBalance: 10.00 });
+    }
+    user.walletBalance += creditAmount;
+    await user.save();
+    res.json({ success: true, balance: user.walletBalance });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 5. Fetch Bot Logs
 app.get('/api/bots/:botId/logs', (req, res) => {
   const { botId } = req.params;
