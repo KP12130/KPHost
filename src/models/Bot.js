@@ -6,6 +6,7 @@ const botSchema = new mongoose.Schema({
   name: { type: String, required: true },
   type: { type: String, enum: ['zip', 'github'], default: 'zip' },
   sourceUrl: { type: String }, // Zip filename or Github repo URL
+  startCommand: { type: String, default: 'node index.js' },
   envVars: { type: Map, of: String, default: {} },
   ramLimitMB: { type: Number, default: 128 }, // Default 128MB RAM tier
   status: { type: String, enum: ['STOPPED', 'BUILDING', 'RUNNING', 'ERROR'], default: 'STOPPED' },

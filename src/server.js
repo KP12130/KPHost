@@ -248,7 +248,7 @@ const inMemoryBots = new Map();
 
 // 2. Deploy Bot via GitHub Repo URL
 app.post('/api/bots/deploy-github', async (req, res) => {
-  const { botName, githubUrl, envVars } = req.body;
+  const { botName, githubUrl, envVars, startCommand } = req.body;
 
   if (!githubUrl || !githubUrl.includes('github.com')) {
     return res.status(400).json({ error: 'Please enter a valid GitHub repository URL.' });
@@ -268,6 +268,7 @@ app.post('/api/bots/deploy-github', async (req, res) => {
       name: botName || cleanName,
       type: 'github',
       sourceUrl: githubUrl,
+      startCommand: startCommand || 'node index.js',
       envVars: parsedEnv,
       ramLimitMB: 128,
       status: 'STOPPED',
@@ -301,7 +302,7 @@ app.post('/api/bots/deploy-github', async (req, res) => {
 
 // 2. Upload Bot ZIP with VirusTotal Malware Inspection
 app.post('/api/bots/upload-zip', upload.single('botZip'), async (req, res) => {
-  const { botName, userId, envVars } = req.body;
+  const { botName, userId, envVars, startCommand } = req.body;
   const file = req.file;
 
   if (!file) {
@@ -336,6 +337,7 @@ app.post('/api/bots/upload-zip', upload.single('botZip'), async (req, res) => {
       name: botName || cleanName,
       type: 'zip',
       sourceUrl: file.originalname,
+      startCommand: startCommand || 'node index.js',
       envVars: parsedEnv,
       ramLimitMB: 128,
       status: 'STOPPED',
@@ -371,18 +373,35 @@ app.post('/api/bots/upload-zip', upload.single('botZip'), async (req, res) => {
 app.post('/api/bots/:botId/start', async (req, res) => {
   const { botId } = req.params;
   try {
-    const bot = await Bot.findOne({ botId });
+    let bot = null;
+    try {
+      if (mongoose.connection.readyState === 1) {
+        bot = await Bot.findOne({ botId }).maxTimeMS(1000);
+      }
+    } catch (e) {}
+
+    if (!bot) {
+      bot = inMemoryBots.get(botId);
+    }
+
     if (!bot) return res.status(404).json({ error: 'Bot not found.' });
 
     if (bot.securityStatus === 'INFECTED') {
       return res.status(403).json({ error: 'Cannot start bot: File flagged by VirusTotal.' });
     }
 
-    const envMap = bot.envVars ? Object.fromEntries(bot.envVars) : {};
-    await startBotProcess(botId, envMap, bot.ramLimitMB || 128);
+    const envMap = bot.envVars ? (bot.envVars instanceof Map ? Object.fromEntries(bot.envVars) : bot.envVars) : {};
+    await startBotProcess(botId, envMap, bot.ramLimitMB || 128, bot.startCommand);
 
     bot.status = 'RUNNING';
-    await bot.save();
+    if (inMemoryBots.has(botId)) {
+      const memBot = inMemoryBots.get(botId);
+      memBot.status = 'RUNNING';
+    }
+
+    try {
+      if (bot.save) await bot.save();
+    } catch (e) {}
 
     res.json({ success: true, status: 'RUNNING' });
   } catch (err) {

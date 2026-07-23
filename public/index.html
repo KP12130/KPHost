@@ -579,6 +579,9 @@
             <input type="url" id="githubUrlInput" class="input-field" placeholder="https://github.com/username/my-discord-bot">
           </div>
 
+          <label style="font-weight:600; font-size:0.9rem;">Custom Start Command (Optional)</label>
+          <input type="text" id="startCmdInput" class="input-field" placeholder="node index.js (or python bot.py, npm start)">
+
           <label style="font-weight:600; font-size:0.9rem;">Environment Variables (JSON)</label>
           <input type="text" id="envVarsInput" class="input-field" placeholder='{"DISCORD_TOKEN": "YOUR_BOT_TOKEN"}'>
         </div>
@@ -734,6 +737,7 @@
       btn.disabled = true;
 
       const botName = document.getElementById('botNameInput').value;
+      const startCommand = document.getElementById('startCmdInput').value;
       const envVars = document.getElementById('envVarsInput').value || '{}';
 
       try {
@@ -747,12 +751,13 @@
           const formData = new FormData();
           formData.append('botName', botName);
           formData.append('botZip', fileInput.files[0]);
+          formData.append('startCommand', startCommand);
           formData.append('envVars', envVars);
 
           const res = await fetch('/api/bots/upload-zip', { method: 'POST', body: formData });
           const data = await res.json();
           if (data.success) {
-            alert(`✅ VirusTotal Inspection Clean! Bot "${data.bot.name}" deployed successfully.`);
+            window.showToast(`✅ VirusTotal Scan Clean! Bot "${data.bot.name}" deployed.`);
             window.closeUploadModal();
             window.loadBots();
           } else {
@@ -769,11 +774,11 @@
           const res = await fetch('/api/bots/deploy-github', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ botName, githubUrl, envVars })
+            body: JSON.stringify({ botName, githubUrl, startCommand, envVars })
           });
           const data = await res.json();
           if (data.success) {
-            alert(`✅ GitHub Repository Verified! Bot "${data.bot.name}" created.`);
+            window.showToast(`✅ GitHub Repo Verified! Bot "${data.bot.name}" created.`);
             window.closeUploadModal();
             window.loadBots();
           } else {

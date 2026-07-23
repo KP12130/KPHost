@@ -17,14 +17,23 @@ const runningProcesses = new Map();
 const botLogsMap = new Map();
 
 /**
- * Extract ZIP file into bot directory
+ * Extract ZIP file into bot directory with permission fallback
  */
 export function extractBotZip(botId, zipBuffer) {
-  const botDir = path.join(BOTS_DIR, botId);
-  if (fs.existsSync(botDir)) {
-    fs.rmSync(botDir, { recursive: true, force: true });
+  let botDir = path.join(BOTS_DIR, botId);
+  try {
+    if (fs.existsSync(botDir)) {
+      fs.rmSync(botDir, { recursive: true, force: true });
+    }
+    fs.mkdirSync(botDir, { recursive: true });
+  } catch (err) {
+    // Permission fallback directory if main storage is locked by root
+    const fallbackBase = path.join('/tmp', 'kp-host-storage');
+    if (!fs.existsSync(fallbackBase)) fs.mkdirSync(fallbackBase, { recursive: true });
+    botDir = path.join(fallbackBase, botId);
+    if (fs.existsSync(botDir)) fs.rmSync(botDir, { recursive: true, force: true });
+    fs.mkdirSync(botDir, { recursive: true });
   }
-  fs.mkdirSync(botDir, { recursive: true });
 
   const zip = new admZip(zipBuffer);
   zip.extractAllTo(botDir, true);
@@ -52,12 +61,14 @@ export function getBotLogs(botId) {
 }
 
 /**
- * Start a customer bot process with 128MB RAM cap
+ * Start a customer bot process with custom startCommand & 128MB RAM cap
  */
-export async function startBotProcess(botId, envVars = {}, ramLimitMB = 128) {
-  const botDir = path.join(BOTS_DIR, botId);
+export async function startBotProcess(botId, envVars = {}, ramLimitMB = 128, customStartCmd = null) {
+  let botDir = path.join(BOTS_DIR, botId);
   if (!fs.existsSync(botDir)) {
-    throw new Error('Bot directory does not exist. Please upload bot code first.');
+    const fallbackDir = path.join('/tmp', 'kp-host-storage', botId);
+    if (fs.existsSync(fallbackDir)) botDir = fallbackDir;
+    else throw new Error('Bot directory does not exist. Please upload bot code first.');
   }
 
   // Stop if already running
@@ -65,39 +76,47 @@ export async function startBotProcess(botId, envVars = {}, ramLimitMB = 128) {
     stopBotProcess(botId);
   }
 
-  appendBotLog(botId, `⚡ Initializing bot runtime container (RAM Cap: ${ramLimitMB}MB)...`);
+  appendBotLog(botId, `⚡ Initializing bot container (RAM Cap: ${ramLimitMB}MB)...`);
 
-  // Detect main file (index.js, main.js, bot.js, main.py, bot.py)
-  const files = fs.readdirSync(botDir);
-  let mainFile = null;
   let runner = 'node';
+  let args = ['index.js'];
 
-  if (files.includes('index.js')) mainFile = 'index.js';
-  else if (files.includes('main.js')) mainFile = 'main.js';
-  else if (files.includes('bot.js')) mainFile = 'bot.js';
-  else if (files.includes('main.py')) { mainFile = 'main.py'; runner = 'python'; }
-  else if (files.includes('bot.py')) { mainFile = 'bot.py'; runner = 'python'; }
-  else {
-    // Pick first .js or .py file
-    mainFile = files.find(f => f.endsWith('.js') || f.endsWith('.py'));
-    if (mainFile && mainFile.endsWith('.py')) runner = 'python';
+  if (customStartCmd && typeof customStartCmd === 'string' && customStartCmd.trim()) {
+    const parts = customStartCmd.trim().split(/\s+/);
+    runner = parts[0];
+    args = parts.slice(1);
+    appendBotLog(botId, `🛠️ Custom Start Command Active: "${customStartCmd}"`);
+  } else {
+    // Auto-detect main file
+    const files = fs.readdirSync(botDir);
+    let mainFile = null;
+
+    if (files.includes('index.js')) mainFile = 'index.js';
+    else if (files.includes('main.js')) mainFile = 'main.js';
+    else if (files.includes('bot.js')) mainFile = 'bot.js';
+    else if (files.includes('main.py')) { mainFile = 'main.py'; runner = 'python'; }
+    else if (files.includes('bot.py')) { mainFile = 'bot.py'; runner = 'python'; }
+    else {
+      mainFile = files.find(f => f.endsWith('.js') || f.endsWith('.py'));
+      if (mainFile && mainFile.endsWith('.py')) runner = 'python';
+    }
+
+    if (!mainFile) {
+      appendBotLog(botId, `❌ Error: Could not find main entry file.`);
+      throw new Error('No valid main file found in uploaded package.');
+    }
+    args = [mainFile];
   }
 
-  if (!mainFile) {
-    appendBotLog(botId, `❌ Error: Could not find main entry file (index.js, bot.js, main.py).`);
-    throw new Error('No valid main file found in uploaded package.');
-  }
+  appendBotLog(botId, `🚀 Executing: ${runner} ${args.join(' ')}`);
 
-  appendBotLog(botId, `🚀 Executing ${runner} ${mainFile} with 128MB RAM limit...`);
-
-  // Environment options with 128MB Node max-old-space-size cap
   const processEnv = {
     ...process.env,
     ...envVars,
     NODE_OPTIONS: `--max-old-space-size=${ramLimitMB}`
   };
 
-  const child = spawn(runner, [mainFile], {
+  const child = spawn(runner, args, {
     cwd: botDir,
     env: processEnv,
     stdio: ['ignore', 'pipe', 'pipe']
