@@ -739,14 +739,7 @@
     window.logoutUser = async function() {
       currentUser = null;
       try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
-      document.getElementById('profileDropdown').classList.remove('active');
-      document.getElementById('headerLoggedIn').style.display = 'none';
-      document.getElementById('headerLoggedOut').style.display = 'block';
-
-      document.getElementById('dashboardView').style.display = 'none';
-      document.getElementById('heroView').style.display = 'block';
-      window.history.replaceState({}, document.title, '/');
-      window.showToast('🚪 Signed out successfully.');
+      window.location.href = '/';
     };
 
     window.showLanding = function() {

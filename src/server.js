@@ -344,8 +344,11 @@ app.post('/api/bots/deploy-github', async (req, res) => {
       try { parsedEnv = typeof envVars === 'string' ? JSON.parse(envVars) : envVars; } catch (e) {}
     }
 
+    const ownerEmail = (req.session && req.session.user) ? req.session.user.email : 'dev@kphost.tech';
+
     const botObj = {
       botId,
+      ownerEmail,
       name: botName || cleanName,
       type: 'github',
       sourceUrl: githubUrl,
@@ -431,8 +434,11 @@ app.post('/api/bots/upload-zip', upload.single('botZip'), async (req, res) => {
       try { parsedEnv = typeof envVars === 'string' ? JSON.parse(envVars) : envVars; } catch (e) {}
     }
 
+    const ownerEmail = (req.session && req.session.user) ? req.session.user.email : 'dev@kphost.tech';
+
     const botObj = {
       botId,
+      ownerEmail,
       name: botName || cleanName,
       type: 'zip',
       sourceUrl: file.originalname,
@@ -559,12 +565,17 @@ app.get('/api/bots/:botId/logs', (req, res) => {
   res.json({ success: true, logs });
 });
 
-// 6. Fetch All User Bots
+// 6. Fetch All User Bots (Strict Multi-Tenant Account Isolation)
 app.get('/api/bots', async (req, res) => {
+  const userEmail = (req.session && req.session.user) ? req.session.user.email : null;
+  if (!userEmail) {
+    return res.json({ success: true, bots: [] });
+  }
+
   let rawBots = [];
   try {
     if (mongoose.connection.readyState === 1) {
-      const dbBots = await Bot.find().sort({ createdAt: -1 }).maxTimeMS(1000);
+      const dbBots = await Bot.find({ ownerEmail: userEmail }).sort({ createdAt: -1 }).maxTimeMS(1000);
       if (dbBots && dbBots.length > 0) rawBots = dbBots;
     }
   } catch (err) {}
@@ -573,7 +584,13 @@ app.get('/api/bots', async (req, res) => {
     rawBots = Array.from(inMemoryBots.values());
   }
 
-  const liveBots = rawBots.map(b => {
+  // Filter bots belonging strictly to the logged in user
+  const userBots = rawBots.filter(b => {
+    const owner = b.ownerEmail || (b.ownerId && typeof b.ownerId === 'string' ? b.ownerId : null);
+    return owner === userEmail;
+  });
+
+  const liveBots = userBots.map(b => {
     const obj = b.toObject ? b.toObject() : { ...b };
     obj.status = isBotRunning(obj.botId) ? 'RUNNING' : 'STOPPED';
     return obj;
