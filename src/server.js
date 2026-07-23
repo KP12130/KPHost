@@ -492,10 +492,28 @@ app.get('/api/bots', async (req, res) => {
   res.json({ success: true, bots: liveBots });
 });
 
+async function restoreRunningBots() {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const runningBots = await Bot.find({ status: 'RUNNING' });
+      for (const bot of runningBots) {
+        try {
+          const envMap = bot.envVars ? (bot.envVars instanceof Map ? Object.fromEntries(bot.envVars) : bot.envVars) : {};
+          await startBotProcess(bot.botId, envMap, bot.ramLimitMB || 128, bot.startCommand);
+          console.log(`⚡ Auto-restored active bot container: ${bot.botId}`);
+        } catch (e) {
+          console.warn(`Could not restore bot ${bot.botId}:`, e.message);
+        }
+      }
+    }
+  } catch (err) {}
+}
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`=======================================================`);
   console.log(`🟢 KP Host Control Panel & API is LIVE on port ${PORT}!`);
   console.log(`🌐 Dashboard: http://localhost:${PORT}`);
   console.log(`=======================================================`);
+  await restoreRunningBots();
 });
