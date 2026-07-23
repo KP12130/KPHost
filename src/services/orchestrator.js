@@ -54,6 +54,13 @@ function appendBotLog(botId, message) {
 }
 
 /**
+ * Check if bot process is active
+ */
+export function isBotRunning(botId) {
+  return runningProcesses.has(botId);
+}
+
+/**
  * Get live logs for a bot
  */
 export function getBotLogs(botId) {

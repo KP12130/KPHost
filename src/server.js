@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 
 import { connectDB } from './services/db.js';
 import { scanFileForViruses } from './services/security.js';
-import { extractBotZip, startBotProcess, stopBotProcess, getBotLogs } from './services/orchestrator.js';
+import { extractBotZip, startBotProcess, stopBotProcess, getBotLogs, isBotRunning } from './services/orchestrator.js';
 import { User } from './models/User.js';
 import { Bot } from './models/Bot.js';
 
@@ -471,15 +471,25 @@ app.get('/api/bots/:botId/logs', (req, res) => {
 
 // 6. Fetch All User Bots
 app.get('/api/bots', async (req, res) => {
+  let rawBots = [];
   try {
     if (mongoose.connection.readyState === 1) {
       const dbBots = await Bot.find().sort({ createdAt: -1 }).maxTimeMS(1000);
-      if (dbBots && dbBots.length > 0) {
-        return res.json({ success: true, bots: dbBots });
-      }
+      if (dbBots && dbBots.length > 0) rawBots = dbBots;
     }
   } catch (err) {}
-  res.json({ success: true, bots: Array.from(inMemoryBots.values()) });
+
+  if (!rawBots || rawBots.length === 0) {
+    rawBots = Array.from(inMemoryBots.values());
+  }
+
+  const liveBots = rawBots.map(b => {
+    const obj = b.toObject ? b.toObject() : { ...b };
+    obj.status = isBotRunning(obj.botId) ? 'RUNNING' : 'STOPPED';
+    return obj;
+  });
+
+  res.json({ success: true, bots: liveBots });
 });
 
 const PORT = process.env.PORT || 3000;
