@@ -736,9 +736,6 @@
     };
 
     window.openUploadModal = function() {
-      window.generateCaptcha();
-      const inp = document.getElementById('captchaInput');
-      if (inp) inp.value = '';
       document.getElementById('uploadModal').classList.add('active');
     };
     window.closeUploadModal = function() { document.getElementById('uploadModal').classList.remove('active'); };
@@ -841,14 +838,6 @@
     window.handleDeployment = async function(e) {
       e.preventDefault();
       const btn = document.getElementById('deploySubmitBtn');
-
-      const userCaptcha = parseInt(document.getElementById('captchaInput').value);
-      if (isNaN(userCaptcha) || userCaptcha !== currentCaptchaAnswer) {
-        alert('❌ CAPTCHA Verification Failed: Incorrect math answer. Please try again!');
-        window.generateCaptcha();
-        return;
-      }
-
       btn.innerText = '⏳ Deploying...';
       btn.disabled = true;
 
