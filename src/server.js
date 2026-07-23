@@ -246,7 +246,33 @@ app.post('/api/auth/login', async (req, res) => {
   res.json({ success: true, user: defaultUser });
 });
 
-const inMemoryBots = new Map();
+const STORAGE_DIR = path.join(__dirname, '../storage');
+if (!fs.existsSync(STORAGE_DIR)) fs.mkdirSync(STORAGE_DIR, { recursive: true });
+const JSON_DB_FILE = path.join(STORAGE_DIR, 'bots-database.json');
+
+function saveBotsToJson(botsMap) {
+  try {
+    const list = Array.from(botsMap.values());
+    fs.writeFileSync(JSON_DB_FILE, JSON.stringify(list, null, 2));
+  } catch (e) {
+    console.warn('JSON DB Save Error:', e.message);
+  }
+}
+
+function loadBotsFromJson() {
+  try {
+    if (fs.existsSync(JSON_DB_FILE)) {
+      const data = fs.readFileSync(JSON_DB_FILE, 'utf8');
+      const list = JSON.parse(data);
+      const map = new Map();
+      list.forEach(b => map.set(b.botId, b));
+      return map;
+    }
+  } catch (e) {}
+  return new Map();
+}
+
+const inMemoryBots = loadBotsFromJson();
 
 // 2. Deploy Bot via GitHub Repo URL
 app.post('/api/bots/deploy-github', async (req, res) => {
@@ -290,6 +316,7 @@ app.post('/api/bots/deploy-github', async (req, res) => {
     };
 
     inMemoryBots.set(botId, botObj);
+    saveBotsToJson(inMemoryBots);
 
     try {
       if (mongoose.connection.readyState === 1) {
@@ -359,6 +386,7 @@ app.post('/api/bots/upload-zip', upload.single('botZip'), async (req, res) => {
     };
 
     inMemoryBots.set(botId, botObj);
+    saveBotsToJson(inMemoryBots);
 
     try {
       if (mongoose.connection.readyState === 1) {
@@ -438,7 +466,9 @@ app.delete('/api/bots/:botId', async (req, res) => {
   const { botId } = req.params;
   try {
     stopBotProcess(botId);
-    await Bot.deleteOne({ botId });
+    inMemoryBots.delete(botId);
+    saveBotsToJson(inMemoryBots);
+    try { await Bot.deleteOne({ botId }); } catch (e) {}
     res.json({ success: true, message: 'Bot deleted successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
