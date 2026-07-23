@@ -3,54 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KP Host - Next-Gen Discord Bot Cloud Platform ($1.00/mo)</title>
+  <title>KP Host - Next-Gen Cloud Platform for Discord Bots</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-dark: #07090b;
-      --bg-card: #0f1318;
-      --bg-card-hover: #151b22;
-      --lime-main: #22c55e;
-      --lime-glow: rgba(34, 197, 94, 0.45);
+      --bg-dark: #05070a;
+      --bg-surface: #0b0f17;
+      --bg-card: #111723;
+      --bg-card-hover: #172030;
+      --lime: #22c55e;
+      --lime-glow: rgba(34, 197, 94, 0.35);
       --lime-border: rgba(34, 197, 94, 0.25);
-      --text-white: #f8fafc;
-      --text-dim: #94a3b8;
-      --border-dark: #1e293b;
-      --accent-red: #ef4444;
-      --accent-blue: #3b82f6;
+      --cyan: #38bdf8;
+      --cyan-glow: rgba(56, 189, 248, 0.25);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #1e293b;
+      --danger: #ef4444;
+      --danger-glow: rgba(239, 68, 68, 0.3);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       font-family: 'Outfit', sans-serif;
       background-color: var(--bg-dark);
-      color: var(--text-white);
+      color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(34, 197, 94, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(56, 189, 248, 0.06) 0%, transparent 40%);
     }
 
-    /* Ambient Background Glow */
-    .bg-glow {
-      position: fixed;
-      top: -200px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 800px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(34, 197, 94, 0.12) 0%, rgba(7, 9, 11, 0) 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
+    /* Top Navigation Header */
     header {
-      background: rgba(15, 19, 24, 0.85);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border-dark);
-      padding: 16px 32px;
+      background: rgba(11, 15, 23, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 36px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -62,72 +57,67 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
       font-weight: 900;
-      font-size: 1.6rem;
+      font-size: 1.7rem;
       letter-spacing: -0.5px;
       cursor: pointer;
     }
     .brand-logo {
-      width: 40px;
-      height: 40px;
-      background: var(--lime-main);
-      border-radius: 10px;
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #000;
       font-weight: 900;
-      box-shadow: 0 0 20px var(--lime-glow);
+      font-size: 1.2rem;
+      box-shadow: 0 0 24px var(--lime-glow);
     }
-    .brand span { color: var(--lime-main); }
+    .brand span { color: var(--lime); }
 
-    /* Profile Avatar Dropdown */
-    .profile-container {
-      position: relative;
-      display: none; /* Shown after auth */
-    }
-
+    /* Profile Container */
+    .profile-container { position: relative; }
     .profile-btn {
       background: var(--bg-card);
       border: 1px solid var(--lime-border);
-      padding: 6px 14px 6px 8px;
-      border-radius: 30px;
+      padding: 6px 16px 6px 8px;
+      border-radius: 40px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .profile-btn:hover {
-      border-color: var(--lime-main);
-      box-shadow: 0 0 16px var(--lime-glow);
+      border-color: var(--lime);
+      box-shadow: 0 0 20px var(--lime-glow);
+      transform: translateY(-1px);
     }
     .profile-avatar {
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid var(--lime-main);
+      border: 2px solid var(--lime);
     }
-    .profile-username {
-      font-weight: 700;
-      font-size: 0.95rem;
-    }
+    .profile-name { font-weight: 700; font-size: 0.95rem; }
 
     .profile-dropdown {
       position: absolute;
-      top: calc(100% + 10px);
+      top: calc(100% + 12px);
       right: 0;
-      width: 250px;
+      width: 260px;
       background: var(--bg-card);
-      border: 1px solid var(--border-dark);
-      border-radius: 14px;
-      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      gap: 14px;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8);
       opacity: 0;
       pointer-events: none;
       transform: translateY(-10px);
@@ -143,24 +133,25 @@
     .balance-badge {
       background: rgba(34, 197, 94, 0.1);
       border: 1px solid var(--lime-border);
-      padding: 10px;
-      border-radius: 8px;
-      color: var(--lime-main);
-      font-weight: 700;
-      font-size: 0.9rem;
+      padding: 12px;
+      border-radius: 10px;
+      color: var(--lime);
+      font-weight: 800;
+      font-size: 0.95rem;
       text-align: center;
     }
 
+    /* Buttons */
     .btn {
-      background: var(--lime-main);
+      background: linear-gradient(135deg, #22c55e, #16a34a);
       color: #000;
       border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
+      padding: 12px 24px;
+      border-radius: 10px;
       font-weight: 700;
       font-size: 0.95rem;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -168,176 +159,327 @@
     }
     .btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 20px var(--lime-glow);
+      box-shadow: 0 6px 24px var(--lime-glow);
     }
-    .btn-secondary { background: #1e293b; color: #fff; }
-    .btn-secondary:hover { background: #334155; box-shadow: none; }
-    .btn-danger { background: var(--accent-red); color: #fff; }
+    .btn-secondary { background: #1e293b; color: #fff; border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #334155; border-color: var(--text-muted); box-shadow: none; }
+    .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+    .btn-danger:hover { box-shadow: 0 6px 24px var(--danger-glow); }
 
     main {
       flex: 1;
-      max-width: 1200px;
+      max-width: 1240px;
       width: 100%;
       margin: 0 auto;
-      padding: 32px 20px;
+      padding: 40px 24px;
       position: relative;
       z-index: 10;
     }
 
-    /* AAA Hero Section */
-    .hero-view {
-      text-align: center;
-      padding: 60px 0 40px 0;
-    }
+    /* AAA Hero View */
+    .hero-view { text-align: center; padding: 60px 0; }
     .hero-badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       background: rgba(34, 197, 94, 0.1);
       border: 1px solid var(--lime-border);
-      color: var(--lime-main);
-      padding: 6px 16px;
-      border-radius: 20px;
+      color: var(--lime);
+      padding: 8px 20px;
+      border-radius: 30px;
       font-size: 0.85rem;
-      font-weight: 700;
+      font-weight: 800;
       text-transform: uppercase;
-      margin-bottom: 24px;
+      letter-spacing: 0.5px;
+      margin-bottom: 28px;
     }
     .hero-title {
-      font-size: 3.8rem;
+      font-size: 4.2rem;
       font-weight: 900;
       line-height: 1.1;
-      letter-spacing: -1.5px;
-      margin-bottom: 20px;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
     }
-    .hero-title span { color: var(--lime-main); }
+    .hero-title span {
+      background: linear-gradient(135deg, #22c55e, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
     .hero-subtitle {
-      color: var(--text-dim);
-      font-size: 1.2rem;
-      max-width: 680px;
-      margin: 0 auto 36px auto;
-      line-height: 1.6;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      max-width: 720px;
+      margin: 0 auto 44px auto;
+      line-height: 1.7;
     }
 
     .oauth-grid {
       display: flex;
       justify-content: center;
-      gap: 16px;
+      gap: 18px;
       flex-wrap: wrap;
-      margin-bottom: 48px;
+      margin-bottom: 60px;
     }
     .btn-oauth {
       background: var(--bg-card);
-      border: 1px solid var(--border-dark);
+      border: 1px solid var(--border);
       color: #fff;
-      padding: 14px 28px;
-      border-radius: 12px;
+      padding: 16px 32px;
+      border-radius: 14px;
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 1.05rem;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.25s ease;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
     .btn-oauth:hover {
-      border-color: var(--lime-main);
+      border-color: var(--lime);
       background: var(--bg-card-hover);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(34, 197, 94, 0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(34, 197, 94, 0.15);
     }
 
-    .stats-row {
+    .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
       margin-top: 40px;
     }
     .stat-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-dark);
-      border-radius: 14px;
-      padding: 24px;
+      background: rgba(17, 23, 35, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
       text-align: center;
+      transition: all 0.25s ease;
+    }
+    .stat-card:hover {
+      border-color: var(--lime-border);
+      transform: translateY(-2px);
     }
     .stat-number {
-      font-size: 2.2rem;
+      font-size: 2.6rem;
       font-weight: 900;
-      color: var(--lime-main);
+      color: var(--lime);
     }
     .stat-label {
-      color: var(--text-dim);
-      font-size: 0.9rem;
-      margin-top: 4px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 6px;
+      font-weight: 500;
     }
 
-    /* Dashboard View */
-    .dashboard-view {
-      display: none; /* Shown after login */
-    }
+    /* Developer Dashboard Console */
+    .dashboard-view { display: none; }
     .dashboard-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 32px;
     }
-    .section-title { font-size: 1.8rem; font-weight: 900; }
+    .section-title { font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; }
 
     .bots-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 28px;
     }
 
     .bot-card {
       background: var(--bg-card);
-      border: 1px solid var(--border-dark);
-      border-radius: 16px;
-      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      transition: all 0.2s;
+      gap: 20px;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
     }
-    .bot-card:hover { border-color: var(--lime-border); }
+    .bot-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--lime), var(--cyan));
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .bot-card:hover {
+      border-color: var(--lime-border);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    }
+    .bot-card:hover::before { opacity: 1; }
 
-    .bot-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .bot-name { font-size: 1.3rem; font-weight: 800; }
-    
-    .status-badge {
-      padding: 4px 12px;
-      border-radius: 20px;
+    .bot-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .bot-card-name { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+
+    .bot-meta-pills {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .meta-pill {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 6px;
       font-size: 0.75rem;
       font-weight: 700;
       text-transform: uppercase;
     }
-    .status-running { background: rgba(34, 197, 94, 0.15); color: var(--lime-main); border: 1px solid var(--lime-border); }
-    .status-stopped { background: rgba(148, 163, 184, 0.15); color: var(--text-dim); border: 1px solid var(--border-dark); }
 
-    .vt-badge {
-      background: rgba(59, 130, 246, 0.1);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      color: #60a5fa;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 0.82rem;
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-running {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--lime);
+      border: 1px solid var(--lime-border);
+    }
+    .status-running::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--lime);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--lime);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+
+    .status-stopped {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .vt-shield-badge {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      color: var(--cyan);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
       font-family: 'JetBrains Mono', monospace;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .logs-drawer {
+    .console-preview {
       background: #000;
-      border-radius: 8px;
-      padding: 12px;
+      border-radius: 10px;
+      padding: 14px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       color: #38bdf8;
       height: 120px;
       overflow-y: auto;
       border: 1px solid #1e293b;
+      cursor: pointer;
+      transition: border-color 0.2s;
     }
+    .console-preview:hover { border-color: var(--cyan); }
+
+    .card-actions { display: flex; gap: 10px; align-items: center; }
+
+    /* Modals & Full Screen Console */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+    .modal-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 580px;
+      padding: 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      box-shadow: 0 32px 64px rgba(0, 0, 0, 0.9);
+    }
+
+    .modal-tabs {
+      display: flex;
+      gap: 8px;
+      background: #05070a;
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--lime);
+      color: #000;
+    }
+
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 14px;
+      padding: 36px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dropzone:hover {
+      border-color: var(--lime);
+      background: rgba(34, 197, 94, 0.03);
+    }
+
+    .input-field {
+      width: 100%;
+      background: #05070a;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 14px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+    .input-field:focus { outline: none; border-color: var(--lime); }
 
     /* Toast Notification */
     .toast-container {
@@ -347,106 +489,26 @@
       z-index: 1000;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
     .toast {
-      background: #0f1318;
-      border: 1px solid var(--lime-main);
+      background: var(--bg-card);
+      border: 1px solid var(--lime);
       color: #fff;
-      padding: 14px 20px;
-      border-radius: 10px;
-      font-weight: 600;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-weight: 700;
       font-size: 0.95rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       animation: slideIn 0.3s ease;
     }
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(12px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 300;
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.2s ease;
-    }
-    .modal-overlay.active { opacity: 1; pointer-events: auto; }
-
-    .modal-box {
-      background: var(--bg-card);
-      border: 1px solid var(--border-dark);
-      border-radius: 20px;
-      width: 100%;
-      max-width: 540px;
-      padding: 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .modal-tabs {
-      display: flex;
-      gap: 10px;
-      background: #07090b;
-      padding: 4px;
-      border-radius: 10px;
-      border: 1px solid var(--border-dark);
-    }
-    .tab-btn {
-      flex: 1;
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      padding: 10px;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .tab-btn.active {
-      background: var(--lime-main);
-      color: #000;
-    }
-
-    .dropzone {
-      border: 2px dashed var(--border-dark);
-      border-radius: 12px;
-      padding: 32px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .dropzone:hover {
-      border-color: var(--lime-main);
-      background: rgba(34, 197, 94, 0.03);
-    }
-
-    .input-field {
-      width: 100%;
-      background: #07090b;
-      border: 1px solid var(--border-dark);
-      color: #fff;
-      padding: 12px;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 0.95rem;
-    }
-    .input-field:focus { outline: none; border-color: var(--lime-main); }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
   </style>
 </head>
 <body>
-
-  <div class="bg-glow"></div>
 
   <header>
     <div class="brand" onclick="window.showLanding()">
@@ -459,32 +521,32 @@
       <button class="btn" onclick="window.loginUser('GitHub', 'https://github.com/github.png')">🐙 Sign In</button>
     </div>
 
-    <!-- Logged In Profile State -->
-    <div class="profile-container" id="headerLoggedIn">
+    <!-- Logged In State -->
+    <div class="profile-container" id="headerLoggedIn" style="display:none;">
       <div class="profile-btn" onclick="window.toggleDropdown()">
         <img src="https://github.com/github.png" class="profile-avatar" id="navAvatar">
-        <span class="profile-username" id="navUsername">KP Developer</span>
-        <span style="font-size:0.8rem;">▼</span>
+        <span class="profile-name" id="navUsername">KP Developer</span>
+        <span style="font-size:0.75rem; color:var(--text-muted);">▼</span>
       </div>
 
       <div class="profile-dropdown" id="profileDropdown">
-        <div style="font-size:0.85rem; color:var(--text-dim);">Logged in as <b id="userEmail" style="color:#fff;">dev@kphost.io</b></div>
-        <div class="balance-badge" style="text-align:center;">💰 Credit Balance: $<span id="userBalance">10.00</span></div>
+        <div style="font-size:0.85rem; color:var(--text-muted);">Logged in as <b id="userEmail" style="color:#fff;">dev@kphost.tech</b></div>
+        <div class="balance-badge">💰 Wallet Credit: $<span id="userBalance">10.00</span></div>
         <button class="btn btn-secondary" style="width:100%; font-size:0.85rem;" onclick="window.addCredits()">+ Add $5.00 Credits</button>
-        <div style="font-size:0.8rem; color:var(--lime-main); text-align:center;">⭐ Level 1 Developer</div>
-        <hr style="border-color:var(--border-dark);">
+        <div style="font-size:0.8rem; color:var(--lime); text-align:center; font-weight:700;">⭐ Level 1 Developer</div>
+        <hr style="border-color:var(--border);">
         <button class="btn btn-secondary" style="width:100%;" onclick="window.logoutUser()">🚪 Sign Out</button>
       </div>
     </div>
   </header>
 
   <main>
-    <!-- AAA Hero Landing View -->
+    <!-- AAA Hero View -->
     <div class="hero-view" id="heroView">
-      <div class="hero-badge">⚡ Next-Gen Cloud Platform</div>
-      <h1 class="hero-title">The Ultimate Cloud for <span>Discord Bots</span></h1>
+      <div class="hero-badge">⚡ Cyberpunk Cloud Infrastructure</div>
+      <h1 class="hero-title">Host Your Discord Bots <span>24/7 For $1.00/mo</span></h1>
       <p class="hero-subtitle">
-        Host your Discord bots 24/7 with 128MB dedicated RAM containers, zero downtime, and automated VirusTotal malware inspection for just <b>$1.00/month</b>.
+        128MB isolated container RAM tiers, automated VirusTotal malware shield, instant GitHub repo deployments, and real-time terminal inspector.
       </p>
 
       <div class="oauth-grid">
@@ -504,10 +566,10 @@
         </button>
       </div>
 
-      <div class="stats-row">
+      <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-number">99.99%</div>
-          <div class="stat-label">Guaranteed Uptime</div>
+          <div class="stat-label">Guaranteed SLA Uptime</div>
         </div>
         <div class="stat-card">
           <div class="stat-number">$1.00</div>
@@ -519,20 +581,20 @@
         </div>
         <div class="stat-card">
           <div class="stat-number">🛡️ Clean</div>
-          <div class="stat-label">VirusTotal Inspection</div>
+          <div class="stat-label">VirusTotal Malware Shield</div>
         </div>
       </div>
     </div>
 
-    <!-- User Console Dashboard View -->
+    <!-- Developer Console -->
     <div class="dashboard-view" id="dashboardView">
       <div class="dashboard-header">
         <div>
           <div class="section-title">Developer Console</div>
-          <div style="color:var(--text-dim); font-size:0.9rem; margin-top:2px;">Manage your active 24/7 Discord bots</div>
+          <div style="color:var(--text-muted); font-size:0.95rem; margin-top:4px;">Manage your active 24/7 Discord bots</div>
         </div>
         
-        <div style="display:flex; gap:12px;">
+        <div style="display:flex; gap:14px;">
           <button class="btn btn-secondary" onclick="window.loadBots()">🔄 Refresh</button>
           <button class="btn" onclick="window.openUploadModal()">🚀 Deploy Bot</button>
         </div>
@@ -544,36 +606,12 @@
     </div>
   </main>
 
-  <!-- Full-Screen Console Modal -->
-  <div class="modal-overlay" id="fullLogModal">
-    <div class="modal-box" style="max-width: 900px; width: 95%; height: 80vh; display: flex; flex-direction: column;">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-dark); padding-bottom: 16px;">
-        <div>
-          <div style="font-size:1.4rem; font-weight:800;" id="fullLogTitle">📜 Live Terminal Console - Bot Inspector</div>
-          <div style="font-size:0.85rem; color:var(--text-dim);" id="fullLogMeta">128MB RAM Tier • KP Host Container Node #1</div>
-        </div>
-        <button onclick="window.closeFullLogModal()" style="background:none; border:none; color:var(--text-dim); font-size:1.8rem; cursor:pointer;">×</button>
-      </div>
-
-      <div style="flex:1; background:#000; border-radius:12px; margin: 16px 0; padding:16px; font-family:'JetBrains Mono', monospace; font-size:0.85rem; color:#38bdf8; overflow-y:auto; border:1px solid #1e293b;" id="fullLogConsole">
-        [System] Console stream connecting...
-      </div>
-
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; gap:10px;">
-          <button class="btn btn-secondary" onclick="window.copyConsoleLogs()">📋 Copy Logs</button>
-          <button class="btn btn-secondary" onclick="window.clearConsoleLogs()">🧹 Clear View</button>
-        </div>
-        <button class="btn" onclick="window.closeFullLogModal()">Close Inspector</button>
-      </div>
-    </div>
-  </div>
-
+  <!-- Deploy Modal -->
   <div class="modal-overlay" id="uploadModal">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="font-size:1.4rem; font-weight:800;">🚀 Deploy New Bot</div>
-        <button onclick="window.closeUploadModal()" style="background:none; border:none; color:var(--text-dim); font-size:1.5rem; cursor:pointer;">×</button>
+        <div style="font-size:1.5rem; font-weight:800;">🚀 Deploy New Bot</div>
+        <button onclick="window.closeUploadModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.8rem; cursor:pointer;">×</button>
       </div>
 
       <div class="modal-tabs">
@@ -582,17 +620,19 @@
       </div>
 
       <form id="uploadForm" onsubmit="window.handleDeployment(event)">
-        <div style="display:flex; flex-direction:column; gap:14px;">
-          <label style="font-weight:600; font-size:0.9rem;">Bot Name</label>
-          <input type="text" id="botNameInput" class="input-field" placeholder="my-awesome-bot" required>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div>
+            <label style="font-weight:600; font-size:0.9rem; margin-bottom:6px; display:block;">Bot Name</label>
+            <input type="text" id="botNameInput" class="input-field" placeholder="my-awesome-bot" required>
+          </div>
 
           <!-- ZIP Upload Tab -->
           <div id="zipTabSection">
-            <label style="font-weight:600; font-size:0.9rem; margin-bottom:6px; display:block;">Bot Code Package (.ZIP)</label>
+            <label style="font-weight:600; font-size:0.9rem; margin-bottom:6px; display:block;">Bot Package (.ZIP)</label>
             <div class="dropzone" onclick="document.getElementById('fileInput').click()">
-              <div style="font-size:2rem; margin-bottom:6px;">📦</div>
-              <div style="font-weight:600;" id="fileLabel">Click to select .ZIP bot folder</div>
-              <div style="font-size:0.8rem; color:var(--text-dim); margin-top:4px;">Scanned automatically via VirusTotal API</div>
+              <div style="font-size:2.4rem; margin-bottom:8px;">📦</div>
+              <div style="font-weight:700;" id="fileLabel">Click to select .ZIP bot package</div>
+              <div style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;">Inspected via VirusTotal SHA-256 API</div>
               <input type="file" id="fileInput" accept=".zip" style="display:none;" onchange="window.updateFileLabel(this)">
             </div>
           </div>
@@ -603,14 +643,18 @@
             <input type="url" id="githubUrlInput" class="input-field" placeholder="https://github.com/username/my-discord-bot">
           </div>
 
-          <label style="font-weight:600; font-size:0.9rem;">Custom Start Command (Optional)</label>
-          <input type="text" id="startCmdInput" class="input-field" placeholder="node index.js (or python bot.py, npm start)">
+          <div>
+            <label style="font-weight:600; font-size:0.9rem; margin-bottom:6px; display:block;">Custom Start Command (Optional)</label>
+            <input type="text" id="startCmdInput" class="input-field" placeholder="node src/index.js (or python bot.py, npm start)">
+          </div>
 
-          <label style="font-weight:600; font-size:0.9rem;">Environment Variables (JSON)</label>
-          <input type="text" id="envVarsInput" class="input-field" placeholder='{"DISCORD_TOKEN": "YOUR_BOT_TOKEN"}'>
+          <div>
+            <label style="font-weight:600; font-size:0.9rem; margin-bottom:6px; display:block;">Environment Variables (JSON)</label>
+            <input type="text" id="envVarsInput" class="input-field" placeholder='{"DISCORD_TOKEN": "YOUR_BOT_TOKEN"}'>
+          </div>
         </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+        <div style="display:flex; justify-content:flex-end; gap:14px; margin-top:12px;">
           <button type="button" class="btn btn-secondary" onclick="window.closeUploadModal()">Cancel</button>
           <button type="submit" class="btn" id="deploySubmitBtn">🛡️ Scan & Deploy ($1.00/mo)</button>
         </div>
@@ -618,9 +662,35 @@
     </div>
   </div>
 
+  <!-- Full-Screen Terminal Console Modal -->
+  <div class="modal-overlay" id="fullLogModal">
+    <div class="modal-box" style="max-width: 960px; width: 95%; height: 85vh; display: flex; flex-direction: column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); padding-bottom: 18px;">
+        <div>
+          <div style="font-size:1.5rem; font-weight:800;" id="fullLogTitle">📜 Live Terminal Inspector</div>
+          <div style="font-size:0.85rem; color:var(--text-muted);" id="fullLogMeta">128MB RAM Container Tier • KP Host Worker Node #1</div>
+        </div>
+        <button onclick="window.closeFullLogModal()" style="background:none; border:none; color:var(--text-muted); font-size:2rem; cursor:pointer;">×</button>
+      </div>
+
+      <div style="flex:1; background:#000; border-radius:14px; margin: 20px 0; padding:20px; font-family:'JetBrains Mono', monospace; font-size:0.85rem; color:#38bdf8; overflow-y:auto; border:1px solid #1e293b; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);" id="fullLogConsole">
+        [System] Connecting to live terminal stream...
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; gap:12px;">
+          <button class="btn btn-secondary" onclick="window.copyConsoleLogs()">📋 Copy Logs</button>
+          <button class="btn btn-secondary" onclick="window.clearConsoleLogs()">🧹 Clear View</button>
+        </div>
+        <button class="btn" onclick="window.closeFullLogModal()">Close Inspector</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let activeTab = 'zip';
     let currentUser = null;
+    let activeFullLogBotId = null;
 
     window.showToast = function(msg) {
       let container = document.getElementById('toastContainer');
@@ -646,13 +716,8 @@
       document.getElementById('githubTabSection').style.display = tab === 'github' ? 'block' : 'none';
     };
 
-    window.openUploadModal = function() {
-      document.getElementById('uploadModal').classList.add('active');
-    };
-
-    window.closeUploadModal = function() {
-      document.getElementById('uploadModal').classList.remove('active');
-    };
+    window.openUploadModal = function() { document.getElementById('uploadModal').classList.add('active'); };
+    window.closeUploadModal = function() { document.getElementById('uploadModal').classList.remove('active'); };
 
     window.updateFileLabel = function(input) {
       if (input.files && input.files[0]) {
@@ -711,46 +776,46 @@
         const data = await res.json();
 
         if (!data.bots || data.bots.length === 0) {
-          grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; color:var(--text-dim);">No active bots found. Click <b>🚀 Deploy Bot</b> to host your first Discord bot!</div>`;
+          grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; color:var(--text-muted);">No active bots found. Click <b>🚀 Deploy Bot</b> to host your first Discord bot!</div>`;
           return;
         }
 
         grid.innerHTML = data.bots.map(bot => `
           <div class="bot-card">
-            <div class="bot-header">
+            <div class="bot-card-top">
               <div>
-                <div class="bot-name">${bot.name}</div>
-                <div class="bot-meta" style="margin-top:4px;">
-                  <span class="meta-tag">128MB RAM Tier</span>
-                  <span class="meta-tag">$1.00/mo</span>
-                  <span class="meta-tag">${(bot.type || 'ZIP').toUpperCase()}</span>
+                <div class="bot-card-name">${bot.name}</div>
+                <div class="bot-meta-pills">
+                  <span class="meta-pill">128MB RAM</span>
+                  <span class="meta-pill">$1.00/MO</span>
+                  <span class="meta-pill">${(bot.type || 'ZIP').toUpperCase()}</span>
                 </div>
               </div>
-              <span class="status-badge ${bot.status === 'RUNNING' ? 'status-running' : 'status-stopped'}">${bot.status}</span>
+              <span class="status-pill ${bot.status === 'RUNNING' ? 'status-running' : 'status-stopped'}">${bot.status}</span>
             </div>
 
-            <div class="vt-badge">
-              🛡️ VirusTotal: <b>${bot.securityStatus || 'CLEAN'}</b>
+            <div class="vt-shield-badge">
+              🛡️ VirusTotal Shield: <b>${bot.securityStatus || 'CLEAN'}</b>
             </div>
 
-            <div class="logs-drawer" id="logs-${bot.botId}" onclick="window.openFullLogModal('${bot.botId}', '${bot.name}')" style="cursor:pointer;" title="Click for Full-Screen Inspector">
+            <div class="console-preview" id="logs-${bot.botId}" onclick="window.openFullLogModal('${bot.botId}', '${bot.name}')" title="Click for Full-Screen Console Inspector">
               [System] Console output buffer online. Click for full-screen.
             </div>
 
-            <div class="bot-actions">
+            <div class="card-actions">
               ${bot.status === 'RUNNING' 
                 ? `<button class="btn btn-danger" style="flex:1;" onclick="window.stopBot('${bot.botId}')">🛑 Stop</button>`
                 : `<button class="btn" style="flex:1;" onclick="window.startBot('${bot.botId}')">⚡ Start</button>`
               }
               <button class="btn btn-secondary" onclick="window.openFullLogModal('${bot.botId}', '${bot.name}')">📜 Logs</button>
-              <button class="btn btn-danger" style="padding:8px 12px;" onclick="window.deleteBot('${bot.botId}')">🗑️</button>
+              <button class="btn btn-danger" style="padding:10px 14px;" onclick="window.deleteBot('${bot.botId}')">🗑️</button>
             </div>
           </div>
         `).join('');
 
         data.bots.forEach(b => window.fetchLogs(b.botId));
       } catch (err) {
-        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; color:var(--text-dim);">Click <b>🚀 Deploy Bot</b> above to deploy your first bot!</div>`;
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; color:var(--text-muted);">Click <b>🚀 Deploy Bot</b> above to deploy your first bot!</div>`;
       }
     };
 
@@ -788,7 +853,6 @@
             alert(`❌ Security Alert: ${data.error}`);
           }
         } else {
-          // GitHub Link Deploy
           const githubUrl = document.getElementById('githubUrlInput').value;
           if (!githubUrl) {
             alert('Please enter a GitHub repository URL.');
@@ -817,25 +881,6 @@
       }
     };
 
-    window.startBot = async function(botId) {
-      await fetch(`/api/bots/${botId}/start`, { method: 'POST' });
-      window.loadBots();
-    };
-
-    window.stopBot = async function(botId) {
-      await fetch(`/api/bots/${botId}/stop`, { method: 'POST' });
-      window.loadBots();
-    };
-
-    window.deleteBot = async function(botId) {
-      if (confirm('Are you sure you want to delete this bot?')) {
-        await fetch(`/api/bots/${botId}`, { method: 'DELETE' });
-        window.loadBots();
-      }
-    };
-
-    let activeFullLogBotId = null;
-
     window.openFullLogModal = function(botId, botName) {
       activeFullLogBotId = botId;
       document.getElementById('fullLogTitle').innerText = `📜 Terminal Inspector: ${botName || botId}`;
@@ -859,6 +904,26 @@
     window.clearConsoleLogs = function() {
       const el = document.getElementById('fullLogConsole');
       if (el) el.innerText = '[System] Inspector view cleared.';
+    };
+
+    window.startBot = async function(botId) {
+      await fetch(`/api/bots/${botId}/start`, { method: 'POST' });
+      window.showToast('⚡ Bot process starting...');
+      window.loadBots();
+    };
+
+    window.stopBot = async function(botId) {
+      await fetch(`/api/bots/${botId}/stop`, { method: 'POST' });
+      window.showToast('🛑 Bot process stopped.');
+      window.loadBots();
+    };
+
+    window.deleteBot = async function(botId) {
+      if (confirm('Are you sure you want to delete this bot?')) {
+        await fetch(`/api/bots/${botId}`, { method: 'DELETE' });
+        window.showToast('🗑️ Bot deleted.');
+        window.loadBots();
+      }
     };
 
     window.fetchLogs = async function(botId) {
