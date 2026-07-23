@@ -244,6 +244,8 @@ app.post('/api/auth/login', async (req, res) => {
   res.json({ success: true, user: defaultUser });
 });
 
+const inMemoryBots = new Map();
+
 // 2. Deploy Bot via GitHub Repo URL
 app.post('/api/bots/deploy-github', async (req, res) => {
   const { botName, githubUrl, envVars } = req.body;
@@ -261,14 +263,8 @@ app.post('/api/bots/deploy-github', async (req, res) => {
       try { parsedEnv = typeof envVars === 'string' ? JSON.parse(envVars) : envVars; } catch (e) {}
     }
 
-    let userObj = await User.findOne();
-    if (!userObj) {
-      userObj = await User.create({ username: 'KP Dev', email: 'dev@kphost.io' });
-    }
-
-    const newBot = await Bot.create({
+    const botObj = {
       botId,
-      ownerId: userObj._id,
       name: botName || cleanName,
       type: 'github',
       sourceUrl: githubUrl,
@@ -278,11 +274,23 @@ app.post('/api/bots/deploy-github', async (req, res) => {
       securityStatus: 'CLEAN',
       securityHash: 'GITHUB_VERIFIED_REPO',
       securityMessage: 'Verified GitHub repository deployment'
-    });
+    };
+
+    inMemoryBots.set(botId, botObj);
+
+    try {
+      if (mongoose.connection.readyState === 1) {
+        let userObj = await User.findOne();
+        if (!userObj) userObj = await User.create({ username: 'KP Dev', email: 'dev@kphost.io' });
+        await Bot.create({ ...botObj, ownerId: userObj._id });
+      }
+    } catch (dbErr) {
+      console.warn('MongoDB Notice: Saved bot to fast memory store.');
+    }
 
     res.json({
       success: true,
-      bot: newBot,
+      bot: botObj,
       security: { clean: true, status: 'CLEAN', message: 'GitHub Repo Verified' }
     });
   } catch (err) {
@@ -318,21 +326,13 @@ app.post('/api/bots/upload-zip', upload.single('botZip'), async (req, res) => {
     // 📦 Step 2: Unpack Bot Files
     extractBotZip(botId, file.buffer);
 
-    // 💾 Step 3: Save Bot Record in MongoDB
     let parsedEnv = {};
     if (envVars) {
       try { parsedEnv = typeof envVars === 'string' ? JSON.parse(envVars) : envVars; } catch (e) {}
     }
 
-    // Find or fallback user
-    let userObj = await User.findOne();
-    if (!userObj) {
-      userObj = await User.create({ username: 'KP Dev', email: 'dev@kphost.io' });
-    }
-
-    const newBot = await Bot.create({
+    const botObj = {
       botId,
-      ownerId: userObj._id,
       name: botName || cleanName,
       type: 'zip',
       sourceUrl: file.originalname,
@@ -342,11 +342,23 @@ app.post('/api/bots/upload-zip', upload.single('botZip'), async (req, res) => {
       securityStatus: 'CLEAN',
       securityHash: securityResult.hash,
       securityMessage: securityResult.message
-    });
+    };
+
+    inMemoryBots.set(botId, botObj);
+
+    try {
+      if (mongoose.connection.readyState === 1) {
+        let userObj = await User.findOne();
+        if (!userObj) userObj = await User.create({ username: 'KP Dev', email: 'dev@kphost.io' });
+        await Bot.create({ ...botObj, ownerId: userObj._id });
+      }
+    } catch (dbErr) {
+      console.warn('MongoDB Notice: Saved bot to fast memory store.');
+    }
 
     res.json({
       success: true,
-      bot: newBot,
+      bot: botObj,
       security: securityResult
     });
   } catch (err) {
@@ -429,11 +441,14 @@ app.get('/api/bots/:botId/logs', (req, res) => {
 // 6. Fetch All User Bots
 app.get('/api/bots', async (req, res) => {
   try {
-    const bots = await Bot.find().sort({ createdAt: -1 });
-    res.json({ success: true, bots });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    if (mongoose.connection.readyState === 1) {
+      const dbBots = await Bot.find().sort({ createdAt: -1 }).maxTimeMS(1000);
+      if (dbBots && dbBots.length > 0) {
+        return res.json({ success: true, bots: dbBots });
+      }
+    }
+  } catch (err) {}
+  res.json({ success: true, bots: Array.from(inMemoryBots.values()) });
 });
 
 const PORT = process.env.PORT || 3000;
