@@ -38,12 +38,35 @@ app.get('/api/worker/health', (req, res) => {
   });
 });
 
+import multer from 'multer';
+import { execSync } from 'child_process';
+
+const upload = multer({ storage: multer.memoryStorage() });
+
 // 2. Deploy Bot onto Worker Node
-app.post('/api/worker/deploy', (req, res) => {
-  const { botId, envVars, ramLimitMB = 128 } = req.body;
-  
-  appendLog(botId, `🌐 Worker Node #1 received deployment request for bot ${botId}`);
-  res.json({ success: true, node: 'kp-host-worker-1', status: 'READY' });
+app.post('/api/worker/deploy', upload.single('botZip'), (req, res) => {
+  const { botId, githubUrl, startCommand } = req.body;
+  const botDir = path.join(WORKER_STORAGE, botId);
+
+  if (fs.existsSync(botDir)) {
+    fs.rmSync(botDir, { recursive: true, force: true });
+  }
+  fs.mkdirSync(botDir, { recursive: true });
+
+  if (req.file) {
+    const zip = new admZip(req.file.buffer);
+    zip.extractAllTo(botDir, true);
+    appendLog(botId, `📦 Unpacked ZIP code package into VM #2 storage: ${botDir}`);
+  } else if (githubUrl) {
+    try {
+      execSync(`git clone --depth 1 ${githubUrl} .`, { cwd: botDir, stdio: 'ignore' });
+      appendLog(botId, `🐙 Cloned GitHub repository into VM #2 storage: ${botDir}`);
+    } catch (e) {
+      appendLog(botId, `⚠️ Git clone notice: ${e.message}`);
+    }
+  }
+
+  res.json({ success: true, node: 'kp-host-worker-1', status: 'READY', botDir });
 });
 
 // 3. Start Bot Process on Worker Node (128MB RAM Cap)
