@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import admZip from 'adm-zip';
@@ -92,6 +92,17 @@ export async function startBotProcess(botId, envVars = {}, ramLimitMB = 128, cus
   }
 
   appendBotLog(botId, `⚡ Initializing bot container (RAM Cap: ${ramLimitMB}MB)...`);
+
+  // Auto-install dependencies (discord.js, etc.) if package.json exists and node_modules is missing
+  if (fs.existsSync(path.join(botDir, 'package.json')) && !fs.existsSync(path.join(botDir, 'node_modules'))) {
+    appendBotLog(botId, '📦 Installing bot dependencies (npm install)...');
+    try {
+      execSync('npm install --no-audit', { cwd: botDir, stdio: 'ignore' });
+      appendBotLog(botId, '✅ Dependencies installed successfully.');
+    } catch (e) {
+      appendBotLog(botId, '⚠️ npm install notice: ' + e.message);
+    }
+  }
 
   let runner = 'node';
   let args = ['index.js'];

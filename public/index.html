@@ -544,7 +544,32 @@
     </div>
   </main>
 
-  <!-- Upload Modal -->
+  <!-- Full-Screen Console Modal -->
+  <div class="modal-overlay" id="fullLogModal">
+    <div class="modal-box" style="max-width: 900px; width: 95%; height: 80vh; display: flex; flex-direction: column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-dark); padding-bottom: 16px;">
+        <div>
+          <div style="font-size:1.4rem; font-weight:800;" id="fullLogTitle">📜 Live Terminal Console - Bot Inspector</div>
+          <div style="font-size:0.85rem; color:var(--text-dim);" id="fullLogMeta">128MB RAM Tier • KP Host Container Node #1</div>
+        </div>
+        <button onclick="window.closeFullLogModal()" style="background:none; border:none; color:var(--text-dim); font-size:1.8rem; cursor:pointer;">×</button>
+      </div>
+
+      <div style="flex:1; background:#000; border-radius:12px; margin: 16px 0; padding:16px; font-family:'JetBrains Mono', monospace; font-size:0.85rem; color:#38bdf8; overflow-y:auto; border:1px solid #1e293b;" id="fullLogConsole">
+        [System] Console stream connecting...
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-secondary" onclick="window.copyConsoleLogs()">📋 Copy Logs</button>
+          <button class="btn btn-secondary" onclick="window.clearConsoleLogs()">🧹 Clear View</button>
+        </div>
+        <button class="btn" onclick="window.closeFullLogModal()">Close Inspector</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
   <div class="modal-overlay" id="uploadModal">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -709,8 +734,8 @@
               🛡️ VirusTotal: <b>${bot.securityStatus || 'CLEAN'}</b>
             </div>
 
-            <div class="logs-drawer" id="logs-${bot.botId}">
-              [System] Console output buffer online.
+            <div class="logs-drawer" id="logs-${bot.botId}" onclick="window.openFullLogModal('${bot.botId}', '${bot.name}')" style="cursor:pointer;" title="Click for Full-Screen Inspector">
+              [System] Console output buffer online. Click for full-screen.
             </div>
 
             <div class="bot-actions">
@@ -718,7 +743,7 @@
                 ? `<button class="btn btn-danger" style="flex:1;" onclick="window.stopBot('${bot.botId}')">🛑 Stop</button>`
                 : `<button class="btn" style="flex:1;" onclick="window.startBot('${bot.botId}')">⚡ Start</button>`
               }
-              <button class="btn btn-secondary" onclick="window.fetchLogs('${bot.botId}')">📜 Logs</button>
+              <button class="btn btn-secondary" onclick="window.openFullLogModal('${bot.botId}', '${bot.name}')">📜 Logs</button>
               <button class="btn btn-danger" style="padding:8px 12px;" onclick="window.deleteBot('${bot.botId}')">🗑️</button>
             </div>
           </div>
@@ -810,6 +835,33 @@
       }
     };
 
+    let activeFullLogBotId = null;
+
+    window.openFullLogModal = function(botId, botName) {
+      activeFullLogBotId = botId;
+      document.getElementById('fullLogTitle').innerText = `📜 Terminal Inspector: ${botName || botId}`;
+      document.getElementById('fullLogModal').classList.add('active');
+      window.fetchLogs(botId);
+    };
+
+    window.closeFullLogModal = function() {
+      activeFullLogBotId = null;
+      document.getElementById('fullLogModal').classList.remove('active');
+    };
+
+    window.copyConsoleLogs = function() {
+      const el = document.getElementById('fullLogConsole');
+      if (el) {
+        navigator.clipboard.writeText(el.innerText);
+        window.showToast('📋 Copied full console logs to clipboard!');
+      }
+    };
+
+    window.clearConsoleLogs = function() {
+      const el = document.getElementById('fullLogConsole');
+      if (el) el.innerText = '[System] Inspector view cleared.';
+    };
+
     window.fetchLogs = async function(botId) {
       try {
         const res = await fetch(`/api/bots/${botId}/logs`);
@@ -818,6 +870,14 @@
         if (el && data.logs) {
           el.innerText = data.logs.join('\n');
           el.scrollTop = el.scrollHeight;
+        }
+
+        if (activeFullLogBotId === botId && data.logs) {
+          const fullEl = document.getElementById('fullLogConsole');
+          if (fullEl) {
+            fullEl.innerText = data.logs.join('\n');
+            fullEl.scrollTop = fullEl.scrollHeight;
+          }
         }
       } catch (err) {}
     };
