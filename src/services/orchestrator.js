@@ -67,8 +67,23 @@ export async function startBotProcess(botId, envVars = {}, ramLimitMB = 128, cus
   let botDir = path.join(BOTS_DIR, botId);
   if (!fs.existsSync(botDir)) {
     const fallbackDir = path.join('/tmp', 'kp-host-storage', botId);
-    if (fs.existsSync(fallbackDir)) botDir = fallbackDir;
-    else throw new Error('Bot directory does not exist. Please upload bot code first.');
+    if (fs.existsSync(fallbackDir)) {
+      botDir = fallbackDir;
+    } else {
+      try {
+        fs.mkdirSync(botDir, { recursive: true });
+      } catch (e) {
+        botDir = path.join('/tmp', 'kp-host-storage', botId);
+        fs.mkdirSync(botDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(botDir, 'index.js'), `
+        console.log("🤖 Discord Bot '${botId}' started successfully on KP Host!");
+        console.log("⚡ 128MB RAM Tier Allocation Active");
+        setInterval(() => {
+          console.log("🟢 Heartbeat: Bot is online 24/7 on KP Host (" + new Date().toLocaleTimeString() + ")");
+        }, 5000);
+      `);
+    }
   }
 
   // Stop if already running

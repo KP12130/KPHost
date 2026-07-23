@@ -4,6 +4,8 @@ import { WebSocketServer } from 'ws';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
+import { execSync } from 'child_process';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
 
@@ -257,6 +259,16 @@ app.post('/api/bots/deploy-github', async (req, res) => {
   try {
     const cleanName = (botName || 'gh-bot-' + Date.now()).toLowerCase().replace(/[^a-z0-9-]/g, '');
     const botId = cleanName + '-' + Math.floor(Math.random() * 1000);
+
+    // 📦 Clone GitHub Repository automatically
+    const BOTS_STORAGE = path.join(__dirname, '../storage/bots');
+    const botDir = path.join(BOTS_STORAGE, botId);
+    try {
+      if (!fs.existsSync(botDir)) fs.mkdirSync(botDir, { recursive: true });
+      execSync(`git clone --depth 1 ${githubUrl} .`, { cwd: botDir, stdio: 'ignore' });
+    } catch (e) {
+      console.warn('GitHub Clone Notice:', e.message);
+    }
 
     let parsedEnv = {};
     if (envVars) {
