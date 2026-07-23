@@ -39,7 +39,9 @@ app.get('/api/auth/github', (req, res) => {
   if (!clientId || clientId === 'YOUR_GITHUB_CLIENT_ID') {
     return res.redirect('/?login=demo&provider=GitHub');
   }
-  const redirectUri = encodeURIComponent(`${req.protocol}://${req.get('host')}/api/auth/github/callback`);
+  const host = req.get('host');
+  const protocol = host.includes('localhost') ? 'http' : 'https';
+  const redirectUri = encodeURIComponent(`${protocol}://${host}/api/auth/github/callback`);
   res.redirect(`https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email`);
 });
 
@@ -48,7 +50,9 @@ app.get('/api/auth/discord', (req, res) => {
   if (!clientId || clientId === 'YOUR_DISCORD_CLIENT_ID') {
     return res.redirect('/?login=demo&provider=Discord');
   }
-  const redirectUri = encodeURIComponent(`${req.protocol}://${req.get('host')}/api/auth/discord/callback`);
+  const host = req.get('host');
+  const protocol = host.includes('localhost') ? 'http' : 'https';
+  const redirectUri = encodeURIComponent(`${protocol}://${host}/api/auth/discord/callback`);
   res.redirect(`https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20email`);
 });
 
@@ -57,7 +61,9 @@ app.get('/api/auth/google', (req, res) => {
   if (!clientId || clientId === 'YOUR_GOOGLE_CLIENT_ID') {
     return res.redirect('/?login=demo&provider=Google');
   }
-  const redirectUri = encodeURIComponent(`${req.protocol}://${req.get('host')}/api/auth/google/callback`);
+  const host = req.get('host');
+  const protocol = host.includes('localhost') ? 'http' : 'https';
+  const redirectUri = encodeURIComponent(`${protocol}://${host}/api/auth/google/callback`);
   res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20profile%20email`);
 });
 
