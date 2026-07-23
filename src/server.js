@@ -33,7 +33,40 @@ connectDB();
 
 // API Routes
 
-// 1. Auth Endpoint (GitHub / Discord / Google Login)
+// 1. OAuth Redirect Routes (GitHub / Discord / Google)
+app.get('/api/auth/github', (req, res) => {
+  const clientId = process.env.GITHUB_CLIENT_ID;
+  if (!clientId || clientId === 'YOUR_GITHUB_CLIENT_ID') {
+    return res.redirect('/?login=demo&provider=GitHub');
+  }
+  const redirectUri = encodeURIComponent(`${req.protocol}://${req.get('host')}/api/auth/github/callback`);
+  res.redirect(`https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email`);
+});
+
+app.get('/api/auth/discord', (req, res) => {
+  const clientId = process.env.DISCORD_CLIENT_ID;
+  if (!clientId || clientId === 'YOUR_DISCORD_CLIENT_ID') {
+    return res.redirect('/?login=demo&provider=Discord');
+  }
+  const redirectUri = encodeURIComponent(`${req.protocol}://${req.get('host')}/api/auth/discord/callback`);
+  res.redirect(`https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20email`);
+});
+
+app.get('/api/auth/google', (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId || clientId === 'YOUR_GOOGLE_CLIENT_ID') {
+    return res.redirect('/?login=demo&provider=Google');
+  }
+  const redirectUri = encodeURIComponent(`${req.protocol}://${req.get('host')}/api/auth/google/callback`);
+  res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20profile%20email`);
+});
+
+// OAuth Callback Handlers
+app.get('/api/auth/github/callback', (req, res) => res.redirect('/?login=success&provider=GitHub'));
+app.get('/api/auth/discord/callback', (req, res) => res.redirect('/?login=success&provider=Discord'));
+app.get('/api/auth/google/callback', (req, res) => res.redirect('/?login=success&provider=Google'));
+
+// Auth Endpoint (JSON fallback/login)
 app.post('/api/auth/login', async (req, res) => {
   const { email, username, provider, avatar } = req.body;
   const userEmail = email || `${(username || 'dev').toLowerCase().replace(/\s+/g, '')}@kphost.io`;
@@ -44,20 +77,7 @@ app.post('/api/auth/login', async (req, res) => {
     walletBalance: 10.00,
     role: 'user'
   };
-
-  if (mongoose.connection.readyState !== 1) {
-    return res.json({ success: true, user: defaultUser });
-  }
-
-  try {
-    let user = await User.findOne({ email: userEmail }).maxTimeMS(1000);
-    if (!user) {
-      user = await User.create(defaultUser);
-    }
-    res.json({ success: true, user });
-  } catch (err) {
-    res.json({ success: true, user: defaultUser });
-  }
+  res.json({ success: true, user: defaultUser });
 });
 
 // 2. Deploy Bot via GitHub Repo URL

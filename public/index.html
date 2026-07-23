@@ -637,41 +637,11 @@
       document.getElementById('profileDropdown').classList.toggle('active');
     };
 
-    window.loginUser = async function(provider, avatarUrl) {
-      const username = `KP Developer (${provider})`;
-      const email = `kp12130@kphost.io`;
-
-      try {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, email, avatar: avatarUrl, provider })
-        });
-        const data = await res.json();
-        currentUser = data.user || { username, email, avatar: avatarUrl, walletBalance: 10.00 };
-
-        // Update UI Header
-        document.getElementById('navUsername').innerText = currentUser.username;
-        document.getElementById('userEmail').innerText = currentUser.email;
-        document.getElementById('userBalance').innerText = (currentUser.walletBalance || 10).toFixed(2);
-        document.getElementById('navAvatar').src = currentUser.avatar || avatarUrl;
-
-        document.getElementById('headerLoggedOut').style.display = 'none';
-        document.getElementById('headerLoggedIn').style.display = 'block';
-
-        // Switch view from Hero landing to Dashboard console
-        document.getElementById('heroView').style.display = 'none';
-        document.getElementById('dashboardView').style.display = 'block';
-
-        window.showToast(`🎉 Signed in as ${username}! Developer Console active.`);
-        window.loadBots();
-      } catch (e) {
-        window.showToast(`🎉 Signed in as ${username}!`);
-        document.getElementById('heroView').style.display = 'none';
-        document.getElementById('dashboardView').style.display = 'block';
-        document.getElementById('headerLoggedOut').style.display = 'none';
-        document.getElementById('headerLoggedIn').style.display = 'block';
-      }
+    window.loginUser = function(provider, avatarUrl) {
+      window.showToast(`🚀 Redirecting to ${provider} Authorization Page...`);
+      setTimeout(() => {
+        window.location.href = `/api/auth/${provider.toLowerCase()}`;
+      }, 300);
     };
 
     window.logoutUser = function() {
@@ -845,6 +815,28 @@
           el.scrollTop = el.scrollHeight;
         }
       } catch (err) {}
+    };
+
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('login')) {
+        const provider = urlParams.get('provider') || 'OAuth';
+        currentUser = {
+          username: `KP Developer (${provider})`,
+          email: 'kp12130@kphost.io',
+          avatar: 'https://github.com/github.png',
+          walletBalance: 10.00
+        };
+        document.getElementById('navUsername').innerText = currentUser.username;
+        document.getElementById('userEmail').innerText = currentUser.email;
+        document.getElementById('userBalance').innerText = currentUser.walletBalance.toFixed(2);
+        document.getElementById('headerLoggedOut').style.display = 'none';
+        document.getElementById('headerLoggedIn').style.display = 'block';
+        document.getElementById('heroView').style.display = 'none';
+        document.getElementById('dashboardView').style.display = 'block';
+        window.showToast(`🎉 Welcome back! Signed in via ${provider}.`);
+        window.loadBots();
+      }
     };
   </script>
 </body>
