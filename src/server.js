@@ -272,7 +272,7 @@ function loadBotsFromJson() {
   return new Map();
 }
 
-const inMemoryBots = loadBotsFromJson();
+const WORKER_URL = process.env.WORKER_NODE_URL || 'http://10.128.0.3:4000';
 
 // 2. Deploy Bot via GitHub Repo URL
 app.post('/api/bots/deploy-github', async (req, res) => {
@@ -286,14 +286,24 @@ app.post('/api/bots/deploy-github', async (req, res) => {
     const cleanName = (botName || 'gh-bot-' + Date.now()).toLowerCase().replace(/[^a-z0-9-]/g, '');
     const botId = cleanName + '-' + Math.floor(Math.random() * 1000);
 
-    // 📦 Clone GitHub Repository automatically
+    // 📦 Clone GitHub Repository automatically on VM #1 local fallback
     const BOTS_STORAGE = path.join(__dirname, '../storage/bots');
     const botDir = path.join(BOTS_STORAGE, botId);
     try {
       if (!fs.existsSync(botDir)) fs.mkdirSync(botDir, { recursive: true });
       execSync(`git clone --depth 1 ${githubUrl} .`, { cwd: botDir, stdio: 'ignore' });
-    } catch (e) {
-      console.warn('GitHub Clone Notice:', e.message);
+    } catch (e) {}
+
+    // 📡 Forward deployment directly to VM #2 Worker Node!
+    try {
+      await fetch(`${WORKER_URL}/api/worker/deploy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botId, githubUrl, startCommand })
+      });
+      console.log(`📡 Dispatched GitHub bot ${botId} to VM #2 (${WORKER_URL})`);
+    } catch (dispatchErr) {
+      console.warn('Worker Dispatch Notice:', dispatchErr.message);
     }
 
     let parsedEnv = {};
@@ -363,8 +373,25 @@ app.post('/api/bots/upload-zip', upload.single('botZip'), async (req, res) => {
       });
     }
 
-    // 📦 Step 2: Unpack Bot Files
+    // 📦 Step 2: Unpack Bot Files locally & dispatch to VM #2 Worker Node!
     extractBotZip(botId, file.buffer);
+
+    try {
+      const FormData = (await import('form-data')).default;
+      const form = new FormData();
+      form.append('botId', botId);
+      form.append('startCommand', startCommand || 'node index.js');
+      form.append('botZip', file.buffer, { filename: file.originalname });
+
+      await fetch(`${WORKER_URL}/api/worker/deploy`, {
+        method: 'POST',
+        body: form,
+        headers: form.getHeaders ? form.getHeaders() : {}
+      });
+      console.log(`📡 Dispatched ZIP bot ${botId} directly to VM #2 (${WORKER_URL})`);
+    } catch (dispatchErr) {
+      console.warn('Worker Dispatch Notice:', dispatchErr.message);
+    }
 
     let parsedEnv = {};
     if (envVars) {
