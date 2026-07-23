@@ -272,6 +272,7 @@ function loadBotsFromJson() {
   return new Map();
 }
 
+const inMemoryBots = loadBotsFromJson();
 const WORKER_URL = process.env.WORKER_NODE_URL || 'http://10.128.0.3:4000';
 
 // 2. Deploy Bot via GitHub Repo URL
