@@ -339,7 +339,34 @@
       border: 1px solid #1e293b;
     }
 
-    /* Modal Styling */
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast {
+      background: #0f1318;
+      border: 1px solid var(--lime-main);
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -568,6 +595,21 @@
     let activeTab = 'zip';
     let currentUser = null;
 
+    window.showToast = function(msg) {
+      let container = document.getElementById('toastContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.innerHTML = `<span>⚡</span> <div>${msg}</div>`;
+      container.appendChild(t);
+      setTimeout(() => t.remove(), 4000);
+    };
+
     window.switchTab = function(tab) {
       activeTab = tab;
       document.getElementById('tabZipBtn').className = `tab-btn ${tab === 'zip' ? 'active' : ''}`;
@@ -621,9 +663,10 @@
         document.getElementById('heroView').style.display = 'none';
         document.getElementById('dashboardView').style.display = 'block';
 
+        window.showToast(`🎉 Signed in as ${username}! Developer Console active.`);
         window.loadBots();
       } catch (e) {
-        alert('Signed in as ' + username);
+        window.showToast(`🎉 Signed in as ${username}!`);
         document.getElementById('heroView').style.display = 'none';
         document.getElementById('dashboardView').style.display = 'block';
         document.getElementById('headerLoggedOut').style.display = 'none';
@@ -639,6 +682,7 @@
 
       document.getElementById('dashboardView').style.display = 'none';
       document.getElementById('heroView').style.display = 'block';
+      window.showToast('🚪 Signed out successfully.');
     };
 
     window.showLanding = function() {
@@ -656,10 +700,10 @@
         if (data.success) {
           if (currentUser) currentUser.walletBalance = data.balance;
           document.getElementById('userBalance').innerText = data.balance.toFixed(2);
-          alert('🎉 Added $5.00 credits to your wallet! New Balance: $' + data.balance.toFixed(2));
+          window.showToast('🎉 Added $5.00 credits! New Balance: $' + data.balance.toFixed(2));
         }
       } catch (err) {
-        alert('Added $5.00 credits to wallet balance!');
+        window.showToast('🎉 Added $5.00 credits to your wallet balance!');
       }
     };
 
