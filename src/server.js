@@ -67,10 +67,168 @@ app.get('/api/auth/google', (req, res) => {
   res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20profile%20email`);
 });
 
-// OAuth Callback Handlers
-app.get('/api/auth/github/callback', (req, res) => res.redirect('/?login=success&provider=GitHub'));
-app.get('/api/auth/discord/callback', (req, res) => res.redirect('/?login=success&provider=Discord'));
-app.get('/api/auth/google/callback', (req, res) => res.redirect('/?login=success&provider=Google'));
+// OAuth Callback Handlers (Real Profile Exchange + Database Storage)
+app.get('/api/auth/github/callback', async (req, res) => {
+  const { code } = req.query;
+  const clientId = process.env.GITHUB_CLIENT_ID;
+  const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+
+  if (!code || !clientId || !clientSecret || clientSecret === 'YOUR_GITHUB_CLIENT_SECRET') {
+    return res.redirect('/dashboard?login=success&provider=GitHub');
+  }
+
+  try {
+    const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code })
+    });
+    const tokenData = await tokenRes.json();
+    const accessToken = tokenData.access_token;
+
+    if (accessToken) {
+      const userRes = await fetch('https://api.github.com/user', {
+        headers: { Authorization: `token ${accessToken}`, 'User-Agent': 'KP-Host-App' }
+      });
+      const userData = await userRes.json();
+
+      const username = userData.name || userData.login || 'GitHub User';
+      const email = userData.email || `${userData.login}@github.com`;
+      const avatar = userData.avatar_url || 'https://github.com/github.png';
+
+      let user = null;
+      try {
+        user = await User.findOne({ email });
+        if (!user) {
+          user = await User.create({ username, email, avatar, walletBalance: 10.00, githubId: userData.id ? userData.id.toString() : '' });
+        }
+      } catch (e) {}
+
+      const balance = user ? user.walletBalance : 10.00;
+      return res.redirect(`/dashboard?login=success&username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&avatar=${encodeURIComponent(avatar)}&balance=${balance}`);
+    }
+  } catch (err) {
+    console.error('GitHub OAuth Callback Error:', err);
+  }
+  res.redirect('/dashboard?login=success&provider=GitHub');
+});
+
+app.get('/api/auth/discord/callback', async (req, res) => {
+  const { code } = req.query;
+  const clientId = process.env.DISCORD_CLIENT_ID;
+  const clientSecret = process.env.DISCORD_CLIENT_SECRET;
+
+  if (!code || !clientId || !clientSecret || clientSecret === 'YOUR_DISCORD_CLIENT_SECRET') {
+    return res.redirect('/dashboard?login=success&provider=Discord');
+  }
+
+  try {
+    const host = req.get('host');
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const redirectUri = `${protocol}://${host}/api/auth/discord/callback`;
+
+    const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri
+      })
+    });
+    const tokenData = await tokenRes.json();
+    const accessToken = tokenData.access_token;
+
+    if (accessToken) {
+      const userRes = await fetch('https://discord.com/api/users/@me', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const userData = await userRes.json();
+
+      const username = userData.global_name || userData.username || 'Discord User';
+      const email = userData.email || `${userData.id}@discord.com`;
+      const avatar = userData.avatar 
+        ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png`
+        : 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+      let user = null;
+      try {
+        user = await User.findOne({ email });
+        if (!user) {
+          user = await User.create({ username, email, avatar, walletBalance: 10.00, discordId: userData.id });
+        }
+      } catch (e) {}
+
+      const balance = user ? user.walletBalance : 10.00;
+      return res.redirect(`/dashboard?login=success&username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&avatar=${encodeURIComponent(avatar)}&balance=${balance}`);
+    }
+  } catch (err) {
+    console.error('Discord OAuth Callback Error:', err);
+  }
+  res.redirect('/dashboard?login=success&provider=Discord');
+});
+
+app.get('/api/auth/google/callback', async (req, res) => {
+  const { code } = req.query;
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+  if (!code || !clientId || !clientSecret || clientSecret === 'YOUR_GOOGLE_CLIENT_SECRET') {
+    return res.redirect('/dashboard?login=success&provider=Google');
+  }
+
+  try {
+    const host = req.get('host');
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const redirectUri = `${protocol}://${host}/api/auth/google/callback`;
+
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri
+      })
+    });
+    const tokenData = await tokenRes.json();
+    const accessToken = tokenData.access_token;
+
+    if (accessToken) {
+      const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const userData = await userRes.json();
+
+      const username = userData.name || 'Google User';
+      const email = userData.email;
+      const avatar = userData.picture || 'https://lh3.googleusercontent.com/a/default-user';
+
+      let user = null;
+      try {
+        user = await User.findOne({ email });
+        if (!user) {
+          user = await User.create({ username, email, avatar, walletBalance: 10.00, googleId: userData.id });
+        }
+      } catch (e) {}
+
+      const balance = user ? user.walletBalance : 10.00;
+      return res.redirect(`/dashboard?login=success&username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&avatar=${encodeURIComponent(avatar)}&balance=${balance}`);
+    }
+  } catch (err) {
+    console.error('Google OAuth Callback Error:', err);
+  }
+  res.redirect('/dashboard?login=success&provider=Google');
+});
+
+// Serve Dedicated /dashboard Route
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 
 // Auth Endpoint (JSON fallback/login)
 app.post('/api/auth/login', async (req, res) => {

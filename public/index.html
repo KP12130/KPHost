@@ -819,22 +819,26 @@
 
     window.onload = function() {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('login')) {
+      const isDashboardRoute = window.location.pathname === '/dashboard';
+      if (urlParams.has('login') || isDashboardRoute) {
         const provider = urlParams.get('provider') || 'OAuth';
-        currentUser = {
-          username: `KP Developer (${provider})`,
-          email: 'kp12130@kphost.io',
-          avatar: 'https://github.com/github.png',
-          walletBalance: 10.00
-        };
+        const username = urlParams.get('username') || `KP Developer (${provider})`;
+        const email = urlParams.get('email') || 'dev@kphost.tech';
+        const avatar = urlParams.get('avatar') || 'https://github.com/github.png';
+        const balance = parseFloat(urlParams.get('balance')) || 10.00;
+
+        currentUser = { username, email, avatar, walletBalance: balance };
+
         document.getElementById('navUsername').innerText = currentUser.username;
         document.getElementById('userEmail').innerText = currentUser.email;
         document.getElementById('userBalance').innerText = currentUser.walletBalance.toFixed(2);
+        document.getElementById('navAvatar').src = currentUser.avatar;
+
         document.getElementById('headerLoggedOut').style.display = 'none';
         document.getElementById('headerLoggedIn').style.display = 'block';
         document.getElementById('heroView').style.display = 'none';
         document.getElementById('dashboardView').style.display = 'block';
-        window.showToast(`🎉 Welcome back! Signed in via ${provider}.`);
+        window.showToast(`🎉 Welcome ${username}!`);
         window.loadBots();
       }
     };
