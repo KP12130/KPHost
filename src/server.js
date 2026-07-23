@@ -9,6 +9,9 @@ import { execSync } from 'child_process';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
 
+import cookieParser from 'cookie-parser';
+import session from 'express-session';
+
 import { connectDB } from './services/db.js';
 import { scanFileForViruses } from './services/security.js';
 import { extractBotZip, startBotProcess, stopBotProcess, getBotLogs, isBotRunning } from './services/orchestrator.js';
@@ -26,6 +29,13 @@ const wss = new WebSocketServer({ server });
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'kp-host-secret-key-2026-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
+}));
 app.use(express.static(path.join(__dirname, '../public')));
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -107,12 +117,14 @@ app.get('/api/auth/github/callback', async (req, res) => {
       } catch (e) {}
 
       const balance = user ? user.walletBalance : 10.00;
-      return res.redirect(`/dashboard?login=success&username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&avatar=${encodeURIComponent(avatar)}&balance=${balance}`);
+      req.session.user = { username, email, avatar, walletBalance: balance, provider: 'GitHub' };
+      return res.redirect('/dashboard');
     }
   } catch (err) {
     console.error('GitHub OAuth Callback Error:', err);
   }
-  res.redirect('/dashboard?login=success&provider=GitHub');
+  req.session.user = { username: 'KP Developer (GitHub)', email: 'dev@kphost.tech', avatar: 'https://github.com/github.png', walletBalance: 10.00, provider: 'GitHub' };
+  res.redirect('/dashboard');
 });
 
 app.get('/api/auth/discord/callback', async (req, res) => {
@@ -121,7 +133,8 @@ app.get('/api/auth/discord/callback', async (req, res) => {
   const clientSecret = process.env.DISCORD_CLIENT_SECRET;
 
   if (!code || !clientId || !clientSecret || clientSecret === 'YOUR_DISCORD_CLIENT_SECRET') {
-    return res.redirect('/dashboard?login=success&provider=Discord');
+    req.session.user = { username: 'KP Developer (Discord)', email: 'dev@kphost.tech', avatar: 'https://cdn.discordapp.com/embed/avatars/0.png', walletBalance: 10.00, provider: 'Discord' };
+    return res.redirect('/dashboard');
   }
 
   try {
@@ -164,12 +177,14 @@ app.get('/api/auth/discord/callback', async (req, res) => {
       } catch (e) {}
 
       const balance = user ? user.walletBalance : 10.00;
-      return res.redirect(`/dashboard?login=success&username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&avatar=${encodeURIComponent(avatar)}&balance=${balance}`);
+      req.session.user = { username, email, avatar, walletBalance: balance, provider: 'Discord' };
+      return res.redirect('/dashboard');
     }
   } catch (err) {
     console.error('Discord OAuth Callback Error:', err);
   }
-  res.redirect('/dashboard?login=success&provider=Discord');
+  req.session.user = { username: 'KP Developer (Discord)', email: 'dev@kphost.tech', avatar: 'https://cdn.discordapp.com/embed/avatars/0.png', walletBalance: 10.00, provider: 'Discord' };
+  res.redirect('/dashboard');
 });
 
 app.get('/api/auth/google/callback', async (req, res) => {
@@ -219,12 +234,28 @@ app.get('/api/auth/google/callback', async (req, res) => {
       } catch (e) {}
 
       const balance = user ? user.walletBalance : 10.00;
-      return res.redirect(`/dashboard?login=success&username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&avatar=${encodeURIComponent(avatar)}&balance=${balance}`);
+      req.session.user = { username, email, avatar, walletBalance: balance, provider: 'Google' };
+      return res.redirect('/dashboard');
     }
   } catch (err) {
     console.error('Google OAuth Callback Error:', err);
   }
-  res.redirect('/dashboard?login=success&provider=Google');
+  req.session.user = { username: 'KP Developer (Google)', email: 'dev@kphost.tech', avatar: 'https://lh3.googleusercontent.com/a/default-user', walletBalance: 10.00, provider: 'Google' };
+  res.redirect('/dashboard');
+});
+
+// Auth Session Verification Endpoints
+app.get('/api/auth/me', (req, res) => {
+  if (req.session && req.session.user) {
+    return res.json({ success: true, user: req.session.user });
+  }
+  res.status(401).json({ success: false, user: null });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  if (req.session) req.session.destroy(() => {});
+  res.clearCookie('connect.sid');
+  res.json({ success: true });
 });
 
 // Serve Dedicated /dashboard Route
@@ -241,8 +272,9 @@ app.post('/api/auth/login', async (req, res) => {
     email: userEmail,
     avatar: avatar || 'https://github.com/github.png',
     walletBalance: 10.00,
-    role: 'user'
+    provider: provider || 'OAuth'
   };
+  req.session.user = defaultUser;
   res.json({ success: true, user: defaultUser });
 });
 

@@ -736,14 +736,16 @@
       }, 300);
     };
 
-    window.logoutUser = function() {
+    window.logoutUser = async function() {
       currentUser = null;
+      try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
       document.getElementById('profileDropdown').classList.remove('active');
       document.getElementById('headerLoggedIn').style.display = 'none';
       document.getElementById('headerLoggedOut').style.display = 'block';
 
       document.getElementById('dashboardView').style.display = 'none';
       document.getElementById('heroView').style.display = 'block';
+      window.history.replaceState({}, document.title, '/');
       window.showToast('🚪 Signed out successfully.');
     };
 
@@ -946,29 +948,37 @@
       } catch (err) {}
     };
 
-    window.onload = function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const isDashboardRoute = window.location.pathname === '/dashboard';
-      if (urlParams.has('login') || isDashboardRoute) {
-        const provider = urlParams.get('provider') || 'OAuth';
-        const username = urlParams.get('username') || `KP Developer (${provider})`;
-        const email = urlParams.get('email') || 'dev@kphost.tech';
-        const avatar = urlParams.get('avatar') || 'https://github.com/github.png';
-        const balance = parseFloat(urlParams.get('balance')) || 10.00;
+    window.onload = async function() {
+      // 🔒 Strip sensitive query parameters from URL bar for maximum security
+      if (window.location.search) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
 
-        currentUser = { username, email, avatar, walletBalance: balance };
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
 
-        document.getElementById('navUsername').innerText = currentUser.username;
-        document.getElementById('userEmail').innerText = currentUser.email;
-        document.getElementById('userBalance').innerText = currentUser.walletBalance.toFixed(2);
-        document.getElementById('navAvatar').src = currentUser.avatar;
+        if (data.success && data.user) {
+          currentUser = data.user;
 
-        document.getElementById('headerLoggedOut').style.display = 'none';
-        document.getElementById('headerLoggedIn').style.display = 'block';
-        document.getElementById('heroView').style.display = 'none';
-        document.getElementById('dashboardView').style.display = 'block';
-        window.showToast(`🎉 Welcome ${username}!`);
-        window.loadBots();
+          document.getElementById('navUsername').innerText = currentUser.username;
+          document.getElementById('userEmail').innerText = currentUser.email;
+          document.getElementById('userBalance').innerText = (currentUser.walletBalance || 10.00).toFixed(2);
+          document.getElementById('navAvatar').src = currentUser.avatar || 'https://github.com/github.png';
+
+          document.getElementById('headerLoggedOut').style.display = 'none';
+          document.getElementById('headerLoggedIn').style.display = 'block';
+          document.getElementById('heroView').style.display = 'none';
+          document.getElementById('dashboardView').style.display = 'block';
+          window.showToast(`🎉 Welcome ${currentUser.username}!`);
+          window.loadBots();
+          return;
+        }
+      } catch (err) {}
+
+      // If not authenticated, ensure clean landing page
+      if (window.location.pathname === '/dashboard') {
+        window.history.replaceState({}, document.title, '/');
       }
     };
   </script>
